@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, Download, Send, CheckCircle2, Phone, GraduationCap, Eye } from 'lucide-react';
 import { OFFICIAL_SCHOOL_INFO } from '../../data/school';
@@ -11,11 +11,16 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 interface QuickAdmissionDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultTab?: 'forms' | 'enquiry' | 'guidelines';
 }
 
-export const QuickAdmissionDrawer: React.FC<QuickAdmissionDrawerProps> = ({ isOpen, onClose }) => {
+export const QuickAdmissionDrawer: React.FC<QuickAdmissionDrawerProps> = ({
+  isOpen,
+  onClose,
+  defaultTab = 'enquiry'
+}) => {
   const { showSuccess } = useToast();
-  const [activeTab, setActiveTab] = useState<'forms' | 'enquiry' | 'guidelines'>('forms');
+  const [activeTab, setActiveTab] = useState<'forms' | 'enquiry' | 'guidelines'>(defaultTab);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -24,6 +29,14 @@ export const QuickAdmissionDrawer: React.FC<QuickAdmissionDrawerProps> = ({ isOp
 
   // Lock background scroll ref-counted
   useBodyScrollLock(isOpen);
+
+  // Always open directly with Direct Enquiry (or specified defaultTab)
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab);
+      setSubmitError(null);
+    }
+  }, [isOpen, defaultTab]);
 
   const [formData, setFormData] = useState({
     parentName: '',

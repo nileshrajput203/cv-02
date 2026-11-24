@@ -96,7 +96,7 @@ export const OFFICIAL_BOARD_OF_MANAGEMENT: BoardMember[] = [
     designation: "Zonal Director",
     role: "Zonal Director",
     email: "atul.karanjkar@chinmayaeducationcell.org",
-    image: "/images/board-of-management/atul-karanjkar.jpg"
+    image: "/images/board-of-management/atul-karanjkar.webp?v=20261124"
   },
   {
     id: "bm-4",

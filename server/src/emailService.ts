@@ -98,7 +98,7 @@ export function getRecordedSubmissions(): any[] {
 function getSmtpTransporter() {
   const user = process.env.SMTP_USER?.trim().replace(/^["']|["']$/g, '');
   const pass = process.env.SMTP_PASS?.trim().replace(/^["']|["']$/g, '');
-  if (!user || !pass) return null;
+  if (!user || !pass || user === 'your_email@gmail.com' || pass === 'your_16_char_app_password') return null;
 
   const isGmail = user.includes('@gmail.com');
   const host = process.env.SMTP_HOST?.trim().replace(/^["']|["']$/g, '') || (isGmail ? 'smtp.gmail.com' : undefined);

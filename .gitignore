@@ -44,3 +44,5 @@ school/
 server/data/*.json
 !server/data/.gitkeep
 
+
+.vercel

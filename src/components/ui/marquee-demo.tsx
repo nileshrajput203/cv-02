@@ -1,35 +1,102 @@
+import React, { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { FolderOpen } from "lucide-react"
+import { useMotionValue, useTransform, useMotionValueEvent, MotionValue } from "motion/react"
 import MarqueeAlongSvgPath from "@/components/ui/marquee-along-svg-path"
 import { OFFICIAL_GALLERY } from "@/data/gallery"
 
 // The path starts off-screen left (-150), flows across the viewport in a dynamic loop,
 // and swoops straight into the open mouth of the 3D tilted "View Gallery" folder on the right (~1090, 172).
-// Crests are calibrated with generous top clearance so cards and hover states never get clipped.
 const path =
   "M-150 210C-50 280 150 340 350 230C480 150 420 68 350 110C280 155 310 270 480 285C620 300 800 225 930 180C980 162 1035 166 1090 172"
 
+// Fixed visible capacity along the path (calibrated to exactly 20 cards)
+// Guarantees balanced density and clean, non-clumping spacing (~84px center distance)
+const FIXED_SLOT_COUNT = 20
+
+interface RotatingMarqueeCardProps {
+  slotIndex: number
+  totalSlots: number
+  baseOffset: MotionValue<number>
+  gallery: Array<{ id: string; src: string; alt: string }>
+  initialOffset: number
+}
+
+const RotatingMarqueeCard: React.FC<RotatingMarqueeCardProps> = ({
+  slotIndex,
+  totalSlots,
+  baseOffset,
+  gallery,
+  initialOffset,
+}) => {
+  const [cycle, setCycle] = useState(0)
+
+  // Track the integer revolution cycle of this slot
+  // Every time a card completes the path (100%) and wraps back to off-screen (0%),
+  // cycle increments by 1, smoothly advancing to a new image from the gallery.
+  const cycleMotionValue = useTransform(baseOffset, (v) => {
+    const position = (slotIndex * 100) / totalSlots
+    return Math.floor((v + position) / 100)
+  })
+
+  useMotionValueEvent(cycleMotionValue, "change", (latestCycle) => {
+    setCycle(latestCycle)
+  })
+
+  // Safe modulo to cycle seamlessly through the full gallery pool
+  const totalGallery = gallery.length || 1
+  const imageIndex =
+    ((((slotIndex + cycle * totalSlots + initialOffset) % totalGallery) + totalGallery) % totalGallery)
+  const currentPhoto = gallery[imageIndex] || gallery[0]
+
+  return (
+    <Link
+      to="/gallery"
+      className="group block relative w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] md:w-[82px] md:h-[82px] aspect-square rounded-2xl overflow-hidden shadow-[0_6px_18px_rgba(0,0,0,0.22)] border-2 border-white/90 bg-neutral-900 hover:scale-125 hover:shadow-[0_12px_28px_rgba(0,0,0,0.4)] hover:border-amber-300 duration-300 ease-out transition-all shrink-0 cursor-pointer transform-gpu"
+    >
+      <img
+        src={currentPhoto.src}
+        alt={currentPhoto.alt}
+        loading="lazy"
+        decoding="async"
+        onError={(e) => {
+          const target = e.currentTarget
+          if (target.src.includes(".webp")) {
+            target.src = target.src.replace(/\.webp($|\?)/, ".jpg$1")
+            return
+          }
+          const link = target.closest<HTMLElement>("a")
+          if (link) {
+            link.style.display = "none"
+          }
+        }}
+        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110 pointer-events-none select-none"
+        draggable={false}
+      />
+    </Link>
+  )
+}
+
 export default function MarqueeAlongSvgPathDemo() {
-  // Sourced directly from current active official photo gallery, reduced by 4 images to eliminate animation lag
-  const galleryPhotos = OFFICIAL_GALLERY
-    .filter((item) => {
-      // Exclude 4 repetitive items to relieve ribbon card density and ensure smooth 60fps playback
-      const excludedIds = [
-        "chinmaya-sports-sports_athletic_meet_006",
-        "chinmaya-academics-classroom_learning_092",
-        "chinmaya-cultural-cultural_celebration_104",
-        "chinmaya-cultural-arts_and_creativity_004",
-      ];
-      return !excludedIds.includes(item.id);
-    })
-    .map((item) => ({
+  // Sourced from official photo gallery without arbitrary exclusions
+  const allGalleryPhotos = useMemo(() => {
+    return OFFICIAL_GALLERY.map((item) => ({
       id: item.id,
       src: item.imageUrl,
       alt: item.title,
-    }));
+    }))
+  }, [])
+
+  // Randomized starting offset so fresh photos are showcased on every visit
+  const [initialOffset] = useState(() =>
+    Math.floor(Math.random() * (allGalleryPhotos.length || 1))
+  )
+
+  // Shared continuous offset driving the SVG stream
+  const baseOffset = useMotionValue(0)
+
   return (
     <div className="w-full bg-white overflow-hidden border-y border-slate-200 relative select-none py-4 sm:py-6">
-      
       {/* ----------------------------------------------------
           LAYER 1 (z-[5]): Tilted Folder BACK PANEL
           Rendered behind marquee images so they slide OVER it
@@ -70,8 +137,8 @@ export default function MarqueeAlongSvgPathDemo() {
 
       {/* ----------------------------------------------------
           LAYER 2 (z-[10]): MARQUEE STREAM
-          Images enter from off-screen left and glide straight
-          into the folder pocket on the right
+          Fixed 18 evenly spaced slots (no clumping/bunching)
+          Cycling continuously through the gallery pool
          ---------------------------------------------------- */}
       <div className="relative z-10">
         <MarqueeAlongSvgPath
@@ -81,38 +148,22 @@ export default function MarqueeAlongSvgPathDemo() {
           slowdownOnHover={true}
           draggable={true}
           repeat={1}
+          baseOffset={baseOffset}
           dragSensitivity={0.1}
           className="w-full h-[360px] sm:h-[420px] md:h-[460px] lg:h-[510px]"
           responsive
           grabCursor
           preserveAspectRatio="none"
         >
-          {galleryPhotos.map((img, i) => (
-            <Link
-              to="/gallery"
-              key={`${img.id || img.src}-${i}`}
-              className="group block relative w-20 h-20 sm:w-24 sm:h-24 aspect-square rounded-2xl overflow-hidden shadow-[0_6px_18px_rgba(0,0,0,0.22)] border-2 border-white/90 bg-neutral-900 hover:scale-125 hover:shadow-[0_12px_28px_rgba(0,0,0,0.4)] hover:border-amber-300 duration-300 ease-out transition-all shrink-0 cursor-pointer transform-gpu"
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                loading="lazy"
-                decoding="async"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src.includes('.webp')) {
-                    target.src = target.src.replace(/\.webp($|\?)/, '.jpg$1');
-                    return;
-                  }
-                  const link = target.closest<HTMLElement>('a');
-                  if (link) {
-                    link.style.display = 'none';
-                  }
-                }}
-                className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110 pointer-events-none select-none"
-                draggable={false}
-              />
-            </Link>
+          {Array.from({ length: FIXED_SLOT_COUNT }).map((_, slotIndex) => (
+            <RotatingMarqueeCard
+              key={slotIndex}
+              slotIndex={slotIndex}
+              totalSlots={FIXED_SLOT_COUNT}
+              baseOffset={baseOffset}
+              gallery={allGalleryPhotos}
+              initialOffset={initialOffset}
+            />
           ))}
         </MarqueeAlongSvgPath>
       </div>
@@ -138,11 +189,9 @@ export default function MarqueeAlongSvgPathDemo() {
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Front Pocket Lip & Cover:
-              Leaves the top ~25% open so the mouth and back panel are visible */}
+          {/* Front Pocket Lip & Cover */}
           <div className="absolute bottom-0 inset-x-0 h-[75%] sm:h-[77%] rounded-b-2xl rounded-tr-2xl rounded-tl-lg bg-gradient-to-br from-[#E2731D] via-[#CD610D] to-[#9C3E08] shadow-[0_14px_35px_rgba(0,0,0,0.35),-10px_0_24px_rgba(0,0,0,0.25)] border-t-2 border-l border-r border-[#FFD285]/80 flex flex-col justify-between p-3.5 sm:p-5 overflow-hidden">
-            
-            {/* Illuminated Pocket Lip with shadow underneath */}
+            {/* Illuminated Pocket Lip */}
             <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#FFE7B8] via-[#FFB740] to-[#CD610D] shadow-[0_3px_10px_rgba(255,183,64,0.4)]" />
 
             {/* Diagonal cutout highlight on mouth entrance (left side) */}
@@ -204,7 +253,6 @@ export default function MarqueeAlongSvgPathDemo() {
           />
         </div>
       </Link>
-
     </div>
   )
 }

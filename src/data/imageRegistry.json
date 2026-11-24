@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Auto-generated Image Registry. Do not edit manually. Edit files in public/images/ directly.",
-    "updatedAt": "2026-11-09T14:51:41.768Z"
+    "updatedAt": "2026-11-24T15:33:20.721Z"
   },
   "homeHero": [
     {
@@ -45,6 +45,11 @@
       "src": "/images/02-leadership/atul-karanjkar.jpg",
       "caption": "Atul Karanjkar",
       "fileName": "atul-karanjkar.jpg"
+    },
+    {
+      "src": "/images/02-leadership/atul-karanjkar.webp",
+      "caption": "Atul Karanjkar",
+      "fileName": "atul-karanjkar.webp"
     },
     {
       "src": "/images/02-leadership/dr-mane.webp",

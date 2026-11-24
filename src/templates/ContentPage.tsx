@@ -251,6 +251,12 @@ export const ContentPage: React.FC<ContentPageProps> = ({
                             <img 
                               src={member.image} 
                               alt={member.name} 
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (target.src.includes('.webp')) {
+                                  target.src = target.src.replace(/\.webp($|\?)/, '.jpg$1');
+                                }
+                              }}
                               className="w-16 h-16 rounded-2xl object-cover border-2 border-[#DF711B] shadow-sm shrink-0"
                             />
                           ) : (

@@ -1,6 +1,7 @@
 import React, { RefObject, useCallback, useEffect, useRef } from "react"
 import {
   motion,
+  MotionValue,
   SpringOptions,
   useAnimationFrame,
   useMotionValue,
@@ -88,6 +89,9 @@ interface MarqueeAlongSvgPathProps {
 
   cssVariableInterpolation?: CSSVariableInterpolation[]
 
+  // Base offset motion value
+  baseOffset?: MotionValue<number>
+
   // Responsive properties
   responsive?: boolean
 }
@@ -138,12 +142,16 @@ const MarqueeAlongSvgPath = ({
 
   cssVariableInterpolation = [],
 
+  // Base offset control
+  baseOffset: externalBaseOffset,
+
   // Responsive defaults
   responsive = false,
 }: MarqueeAlongSvgPathProps) => {
   const container = useRef<HTMLDivElement>(null)
   const marqueeContainerRef = useRef<HTMLDivElement>(null)
-  const baseOffset = useMotionValue(0)
+  const internalBaseOffset = useMotionValue(0)
+  const baseOffset = externalBaseOffset ?? internalBaseOffset
 
   const pathRef = useRef<SVGPathElement>(null)
 

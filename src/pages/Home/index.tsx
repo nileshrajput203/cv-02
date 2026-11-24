@@ -17,9 +17,7 @@ import { NoticeEventBoard } from '../../components/home/NoticeEventBoard';
 import { ScrollExpandingMosaic } from '../../components/home/ScrollExpandingMosaic';
 
 import { ChinmayaVisionPillarsShowcase } from '../../components/home/ChinmayaVisionPillarsShowcase';
-import { HeroScrollytellingFilm } from '../../components/home/HeroScrollytellingFilm';
-import { MobileHeroSection } from '../../components/home/MobileHeroSection';
-import { BannerCarousel } from '../../components/home/BannerCarousel';
+import { HeroBannerWithForm } from '../../components/home/HeroBannerWithForm';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -30,7 +28,7 @@ const GUIDING_QUOTES = [
     quote: '"Children are not vessels to be filled, but lamps to be lit. When you ignite the noble flame within a child, you illuminate generations."',
     author: 'Pujya Gurudev Swami Chinmayananda',
     role: 'Founder of Chinmaya Mission',
-    image: '/images/swami_chinmayananda_square.webp',
+    image: '/images/quotes/swami_quote_1.webp',
     label: 'VISION OF PUJYA GURUDEV',
   },
   {
@@ -38,7 +36,7 @@ const GUIDING_QUOTES = [
     quote: '"Happiness depends on what you can give, not on what you can get."',
     author: 'Pujya Gurudev Swami Chinmayananda',
     role: 'Founder of Chinmaya Mission',
-    image: '/images/swamiji.webp',
+    image: '/images/quotes/swami_quote_2.webp',
     label: 'ON HAPPINESS',
   },
   {
@@ -46,7 +44,7 @@ const GUIDING_QUOTES = [
     quote: '"Stand up, be bold, be strong. Take the whole responsibility on your own shoulders, and know that you are the creator of your own destiny."',
     author: 'Pujya Gurudev Swami Chinmayananda',
     role: 'Founder of Chinmaya Mission',
-    image: '/images/swami.jpeg',
+    image: '/images/quotes/swami_quote_3.webp',
     label: 'ON COURAGE & CHARACTER',
   },
 ];
@@ -96,14 +94,7 @@ export const HomePage: React.FC = () => {
     return () => clearInterval(timer);
   }, [isQuoteHovered]);
 
-  // Desktop detection for responsive component mounting
-  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
-    window.addEventListener('resize', handleResize, { passive: true });
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const currentQuote = SHUFFLED_QUOTES[activeQuote];
 
@@ -111,17 +102,10 @@ export const HomePage: React.FC = () => {
     <div ref={homeWrapperRef} className="bg-white text-[#181C20] overflow-x-clip selection:bg-[#DF711B] selection:text-white font-sans">
       
       {/* ----------------------------------------------------
-          SECTION 01 - HERO SECTION
-          Desktop (>= 1024px): Master Scrollytelling Film
-          Mobile (< 1024px): School Campus Hero & 2x2 Stats Grid (Navkar-inspired)
+          SECTION 01 - HERO BANNER & QUICK ADMISSION FORM
+          Wide Banner Carousel with Quick Form on Right
          ---------------------------------------------------- */}
-      <div className="hidden lg:block">
-        {isDesktop && <HeroScrollytellingFilm onOpenAdmissions={() => setIsAdmissionDrawerOpen(true)} />}
-      </div>
-
-      <div className="block lg:hidden">
-        {!isDesktop && <MobileHeroSection onOpenAdmissions={() => setIsAdmissionDrawerOpen(true)} />}
-      </div>
+      <HeroBannerWithForm onOpenAdmissions={() => setIsAdmissionDrawerOpen(true)} />
 
       {/* ----------------------------------------------------
           SECTION 02 - SCROLL-JACKED HORIZONTAL PANEL GALLERY
@@ -132,21 +116,19 @@ export const HomePage: React.FC = () => {
       <HorizontalPanelGallery />
 
       {/* ----------------------------------------------------
-          SECTION 2.5 - BANNER CAROUSEL (1.jpeg & 2.jpeg)
+          SECTION 2.6 - GRAND MATRU PITRU PUJAN CEREMONY BANNER (BANNER 2)
          ---------------------------------------------------- */}
-      <BannerCarousel />
-
-      {/* ----------------------------------------------------
-          SECTION 2.6 - SPORTS BANNER
-         ---------------------------------------------------- */}
-      <section className="w-full bg-white relative overflow-hidden" aria-label="Campus Sports Banner">
-        <img 
-          src="/sports-banner.webp?v=20261022" 
-          alt="Chinmaya Vidyalaya Sports Banner - The Game Unites Us" 
-          loading="lazy"
-          decoding="async"
-          className="w-full h-auto object-contain block"
-        />
+      <section className="w-full bg-white relative overflow-hidden" aria-label="Grand Matru Pitru Pujan Ceremony Banner - 06 December 2026">
+        <picture>
+          <source srcSet="/matru_pitru_pujan_banner.webp?v=20261206_final" type="image/webp" />
+          <img 
+            src="/matru_pitru_pujan_banner.png?v=20261206_final" 
+            alt="Chinmaya Vidyalaya Tarapur Grand Matru Pitru Pujan - 06 December 2026 in presence of Pujya Swami Anukoolananda ji" 
+            loading="lazy"
+            decoding="async"
+            className="w-full h-auto object-contain block"
+          />
+        </picture>
       </section>
 
       {/* ----------------------------------------------------
@@ -437,8 +419,14 @@ export const HomePage: React.FC = () => {
                     key={currentQuote.image}
                     src={currentQuote.image}
                     alt={currentQuote.author}
-                    className="w-full h-full object-contain object-center rounded-md"
+                    className="w-full h-full object-cover object-center rounded-md"
                     loading="eager"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src.endsWith('.webp')) {
+                        target.src = target.src.replace('.webp', '.jpg');
+                      }
+                    }}
                   />
                 </div>
 
